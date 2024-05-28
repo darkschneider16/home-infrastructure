@@ -1,0 +1,24 @@
+---
+- name: Home Infrastructure - Servers role (development)
+  ansible.builtin.import_playbook: dev-hi-servers.yml
+
+- name: Home Infrastructure - Servers role (production)
+  ansible.builtin.import_playbook: pro-hi-servers.yml
+
+- name: Home Infrastructure - DHCP Server role
+  ansible.builtin.import_playbook: hi-dhcp-server.yml
+
+- name: Home Infrastructure - Bind Server role
+  ansible.builtin.import_playbook: hi-bind-server.yml
+
+- name: Home Infrastructure - Bind Slave role
+  ansible.builtin.import_playbook: hi-bind-slave.yml
+
+- name: Home Infrastructure - HAProxy role
+  ansible.builtin.import_playbook: hi-haproxy.yml
+
+- name: Home Infrastructure - PostgreSQL roles
+  ansible.builtin.import_playbook: hi-postgresql.yml
+
+- name: Home Infrastructure - Zabbix Servers roles
+  ansible.builtin.import_playbook: hi-zabbix.yml

@@ -1,0 +1,215 @@
+---
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: UFW - Allow HTTPS
+  community.general.ufw:
+    rule: allow
+    port: '443'
+    proto: tcp
+
+- name: UFW - Allow HTTP
+  community.general.ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+
+- name: UFW - Allow zabbix agents to connect to the server
+  community.general.ufw:
+    rule: allow
+    port: '10051'
+    proto: tcp
+
+- name: Download and install the zabbix main debian package
+  ansible.builtin.apt:
+    deb: '{{ zabbix_repository_package_url }}'
+
+- name: Download and add the key from the official zabbix package repository
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      curl https://repo.zabbix.com/zabbix-official-repo.key | sudo apt-key add -
+  changed_when: true
+  args:
+    executable: /bin/bash
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Download and add the key from the official postgresql package repository
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      curl {{ postgresql_url_key }} | sudo apt-key add -
+  changed_when: true
+  args:
+    executable: /bin/bash
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Get the codename of the ubuntu version for apt packages
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      cat /etc/os-release | grep UBUNTU_CODENAME | cut -d'=' -f2
+    executable: /bin/bash
+  changed_when: true
+  register: ubuntu_release
+
+- name: Add official postgresql package repository
+  ansible.builtin.apt_repository:
+    repo: deb {{ postgresql_repo }} {{ ubuntu_release.stdout }}-pgdg main
+    state: present
+    mode: '644'
+    filename: pgdg
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install packages (postgresql)
+  ansible.builtin.apt:
+    name: '{{ install_packages_psql }}'
+    state: present
+
+- name: Install packages (zabbix)
+  ansible.builtin.apt:
+    name: '{{ install_packages }}'
+    state: present
+
+- name: Create pgpass file
+  ansible.builtin.file:
+    path: '{{ ansible_env.HOME }}/.pgpass'
+    state: touch
+    mode: '0600'
+
+- name: Create credentials for pgpass
+  ansible.builtin.lineinfile:
+    path: '{{ ansible_env.HOME }}/.pgpass'
+    state: present
+    insertafter: 'EOF'
+    line: "{{ hostvars['postgresql'].ansible_host }}:5432:{{ zabbix_name_database }}:{{ zabbix_user_database }}:{{ zabbix_user_database_password }}"
+
+- name: Create the zabbix schema
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      /bin/bash -c "/usr/bin/gunzip < {{ zabbix_schema_path }} | {{ postgresql_conn }}"
+  changed_when: true
+  args:
+    executable: /bin/bash
+
+- name: Create the zabbix schema with timescaledb
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      /bin/bash -c "/usr/bin/gunzip < {{ zabbix_schema_timescaledb_path }} | {{ postgresql_conn }}"
+  changed_when: true
+  args:
+    executable: /bin/bash
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: absent
+    regexp: '^DBUser='
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: absent
+    regexp: '^DBPassword='
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: absent
+    regexp: '^DBName='
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: absent
+    regexp: '^DBHost='
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: present
+    regexp: '^# DBUser='
+    insertafter: '^# DBUser='
+    line: 'DBUser={{ zabbix_user_database }}'
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: present
+    regexp: '^# DBPassword='
+    insertafter: '^# DBPassword='
+    line: 'DBPassword={{ zabbix_user_database_password }}'
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: present
+    regexp: '^# DBName='
+    insertafter: '^# DBName='
+    line: 'DBName={{ zabbix_name_database }}'
+
+- name: Configure database name in zabbix server configuration
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    state: present
+    regexp: '^# DBHost='
+    insertafter: '^# DBHost='
+    line: DBHost={{ hostvars['postgresql'].ansible_host }}
+
+- name: Copy a version of zabbix-nginx.j2 into /etc/nginx/sites-available/zabbix-nginx
+  ansible.builtin.template:
+    src: zabbix-nginx.j2
+    dest: /etc/nginx/sites-available/zabbix-nginx
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+
+- name: Create a symlink in /etc/nginx/sites-enabled for zabbix-nginx
+  ansible.builtin.file:
+    state: link
+    src: /etc/nginx/sites-available/zabbix-nginx
+    dest: /etc/nginx/sites-enabled/zabbix-nginx
+
+- name: Delete the default nginx's configuration
+  ansible.builtin.file:
+    state: absent
+    dest: /etc/nginx/sites-enabled/default
+
+- name: Configure PHP to work with our time and date
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/php-fpm.conf
+    state: present
+    regexp: '^; php_value[date.timezone]'
+    line: 'php_value[date.timezone] = Europe/Madrid'
+
+- name: Set to generate locales
+  ansible.builtin.debconf:
+    name: locales
+    question: locales/locales_to_be_generated
+    value: en_US.UTF-8 UTF-8, es_ES.UTF-8 UTF-8
+    vtype: multiselect
+
+- name: Assure that services are enabled
+  ansible.builtin.systemd_service:
+    enabled: true
+    name: '{{ item }}'
+  loop: '{{ zabbix_services }}'
+
+- name: Restart services
+  ansible.builtin.systemd_service:
+    state: restarted
+    name: '{{ item }}'
+  loop: '{{ zabbix_services }}'

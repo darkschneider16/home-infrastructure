@@ -1,0 +1,6 @@
+---
+- name: Home Infrastructure - DNS Slave
+  hosts: dns2
+  become: true
+  roles:
+    - bind-slave

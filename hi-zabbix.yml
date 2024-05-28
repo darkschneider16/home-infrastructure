@@ -1,0 +1,12 @@
+---
+- name: Home Infrastructure - Zabbix Server
+  hosts: zabbix
+  become: true
+  roles:
+    - zabbix-server
+
+- name: Home Infrastructure - PostgreSQL Server (clean status)
+  hosts: postgresql
+  become: true
+  roles:
+    - postgresql-server-clean

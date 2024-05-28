@@ -1,0 +1,79 @@
+---
+- name: Uninstall not needed packages
+  ansible.builtin.apt:
+    name: '{{ uninstall_packages }}'
+    autoremove: true
+    state: absent
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Apt full upgrade
+  ansible.builtin.apt:
+    upgrade: full
+
+- name: Install basic packages
+  ansible.builtin.apt:
+    name: '{{ install_packages }}'
+    state: present
+
+- name: Remove useless packages from the cache
+  ansible.builtin.apt:
+    autoclean: true
+
+- name: Remove dependencies that are no longer required
+  ansible.builtin.apt:
+    autoremove: true
+
+## You must install an ansible galaxy collection
+#   $ ansible-galaxy collection install community.general
+
+- name: Set timezone to Europe/Madrid
+  community.general.timezone:
+    name: Europe/Madrid
+
+- name: Disable password authentication for root
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin prohibit-password'
+
+- name: UFW - Allow SSH connections
+  community.general.ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: UFW - Deny all other incoming traffic by default
+  community.general.ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Add aliases to .bashrc
+  ansible.builtin.blockinfile:
+    path: ~/.bashrc
+    state: present
+    backup: true
+    insertafter: EOF
+    block: |
+      # More aliases
+      alias rm='rm -i'
+      alias cp='cp -i'
+      alias mv='mv -i'
+
+- name: Add aliases to /home/user/.bashrc
+  ansible.builtin.blockinfile:
+    path: /home/{{ ansible_user }}/.bashrc
+    state: present
+    backup: true
+    insertafter: EOF
+    block: |
+      # More aliases
+      alias rm='rm -i'
+      alias cp='cp -i'
+      alias mv='mv -i'
+
+- name: Unconditionaly reboot the machine with all defaults
+  ansible.builtin.reboot:

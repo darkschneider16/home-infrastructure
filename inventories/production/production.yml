@@ -1,0 +1,14 @@
+production:
+  hosts:
+    dhcp:
+      ansible_host: x.x.x.x
+    dns1:
+      ansible_host: x.x.x.x
+    dns2:
+      ansible_host: x.x.x.x
+    postgresql:
+      ansible_host: x.x.x.x
+    haproxy:
+      ansible_host: x.x.x.x
+    zabbix:
+      ansible_host: x.x.x.x

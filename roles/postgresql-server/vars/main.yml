@@ -1,0 +1,4 @@
+---
+install_packages: ['curl', 'ca-certificates', 'gnupg']
+install_packages_postgres: ['postgresql', 'python3-psycopg2']
+install_package_timescaledb: timescaledb-2-postgresql

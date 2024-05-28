@@ -1,0 +1,206 @@
+---
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install packages
+  ansible.builtin.apt:
+    name: '{{ install_packages }}'
+    state: present
+
+- name: Download and add the key from the official postgresql package repository
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      curl {{ postgresql_url_key }} | sudo gpg --dearmor -o {{ postgresql_key_file }}
+  changed_when: true
+  args:
+    executable: /bin/bash
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Get the codename of the ubuntu version for apt packages
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      cat /etc/os-release | grep UBUNTU_CODENAME | cut -d'=' -f2
+    executable: /bin/bash
+  changed_when: true
+  register: ubuntu_release
+
+- name: Add official postgresql package repository
+  ansible.builtin.apt_repository:
+    repo: deb {{ postgresql_repo }} {{ ubuntu_release.stdout }}-pgdg main
+    state: present
+    mode: '644'
+    filename: pgdg
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install postgresql
+  ansible.builtin.apt:
+    name: '{{ install_packages_postgres }}'
+    state: present
+
+- name: Get the path for pg_hba.conf
+  ansible.builtin.shell: sudo -u postgres psql -U postgres -t -P format=unaligned -c 'show hba_file';
+  changed_when: true
+  register: psql_return_hba
+
+- name: Copy a version of pg_hba.conf.j2 into the right location
+  ansible.builtin.template:
+    src: pg_hba.conf.j2
+    dest: '{{ psql_return_hba.stdout }}'
+    owner: postgres
+    group: postgres
+    mode: '0640'
+    backup: true
+
+- name: Restart service postgresql
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: postgresql
+
+- name: UFW - Allow PostgreSQL connections
+  community.general.ufw:
+    rule: allow
+    port: '5432'
+    proto: tcp
+    src: '{{ local_network }}'
+
+- name: Wait for postgresql to be running
+  ansible.builtin.service_facts:
+  register: result
+  until: result.ansible_facts.services['postgresql'].state == 'running'
+  retries: 10
+  delay: 5
+
+- name: Download and add the key from the official TimeScaleDB package repository
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      wget --quiet -O - {{ timescaledb_url_key }} | sudo gpg --dearmor -o {{ timescaledb_key_file }}
+  changed_when: true
+  args:
+    executable: /bin/bash
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Add official TimeScaleDB package repository
+  ansible.builtin.apt_repository:
+    repo: deb {{ timescaledb_repo }} {{ ubuntu_release.stdout }} main
+    state: present
+    mode: '644'
+    filename: timescaledb
+
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Collect PostgreSQL version
+  # become: true
+  # become_user: postgres
+  community.postgresql.postgresql_info:
+    filter: ver*
+  register: postgresql_info
+
+- name: Results of PostgreSQL info
+  ansible.builtin.debug:
+    var: postgresql_info
+
+- name: Install TimeScaleDB
+  ansible.builtin.apt:
+    name: '{{ install_package_timescaledb }}-{{ postgresql_info.version.major }}'
+    state: present
+
+- name: Wait for postgresql to be running
+  ansible.builtin.service_facts:
+  register: result
+  until: result.ansible_facts.services['postgresql'].state == 'running'
+  retries: 10
+  delay: 5
+
+- name: Create a new database for performance tests
+  community.postgresql.postgresql_db:
+    name: performance_tests
+
+- name: Execute the preparation for performance tests
+  ansible.builtin.command: sudo -u postgres pgbench -i -s 10 -h localhost -U postgres performance_tests
+  changed_when: true
+  register: pgbench_init
+
+- name: Results of database initialization
+  ansible.builtin.debug:
+    var: pgbench_init
+
+- name: Execute the performance tests
+  ansible.builtin.command: sudo -u postgres pgbench -c 16 -j 16 -T 60 -h localhost -U postgres performance_tests
+  changed_when: true
+  register: pgbench_results
+
+- name: Results of database performance before optimizations
+  ansible.builtin.debug:
+    var: pgbench_results
+
+- name: Get the path for postgresql.conf
+  ansible.builtin.command: sudo -u postgres psql -U postgres -t -P format=unaligned -c 'show config_file';
+  changed_when: true
+  register: psql_return_conf
+
+## You must install an ansible galaxy collection and a library
+#   $ sudo apt install libpq-dev
+#   $ pip install psycopg2
+#   $ ansible-galaxy collection install community.postgresql
+
+# Set item.key parameter to item.value and show what's been changed and restart is required or not
+- name: Change configuration variables to improve the performance
+  community.postgresql.postgresql_set:
+    name: '{{ item.key }}'
+    value: '{{ item.value }}'
+  loop: "{{ postgresql_conf | dict2items }}"
+
+- name: Restart service postgresql
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: postgresql
+
+- name: Wait for postgresql to be running
+  ansible.builtin.service_facts:
+  register: result
+  until: result.ansible_facts.services['postgresql'].state == 'running'
+  retries: 10
+  delay: 10
+
+- name: Execute again the performance tests
+  ansible.builtin.command: sudo -u postgres pgbench -c 16 -j 16 -T 60 -h localhost -U postgres performance_tests
+  changed_when: true
+  register: pgbench_results_after
+
+- name: Results of database performance before optimizations
+  ansible.builtin.debug:
+    var: pgbench_results_after
+
+- name: Restart service postgresql
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: postgresql
+
+- name: Wait for postgresql to be running
+  ansible.builtin.service_facts:
+  register: result
+  until: result.ansible_facts.services['postgresql'].state == 'running'
+  retries: 10
+  delay: 10
+
+- name: Unconditionally reboot the machine
+  ansible.builtin.reboot:
+    reboot_timeout: 120

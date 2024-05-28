@@ -1,0 +1,6 @@
+---
+- name: Home Infrastructure - DHCP Server
+  hosts: dhcp
+  become: true
+  roles:
+    - dhcp-server

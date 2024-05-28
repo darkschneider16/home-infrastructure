@@ -1,0 +1,5 @@
+---
+auth_stats_password: 'xxxxxxxxxxxxxx'
+zabbix_user_database: 'zabbix_user'
+zabbix_user_database_password: 'xxxxxxxxxxxxxx'
+zabbix_name_database: 'zabbixdb'

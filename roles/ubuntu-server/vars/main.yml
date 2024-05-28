@@ -1,0 +1,3 @@
+---
+install_packages: ['curl', 'vim', 'git', 'ufw', 'bash-completion']
+uninstall_packages: ['landscape-common', 'unattended-upgrades']

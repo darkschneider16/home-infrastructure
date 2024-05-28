@@ -1,0 +1,30 @@
+---
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install packages
+  ansible.builtin.apt:
+    name: '{{ install_packages }}'
+    state: present
+
+- name: UFW - Allow bootps and bootpc
+  community.general.ufw:
+    rule: allow
+    port: 67:68
+    proto: udp
+
+- name: Copy a version of dnsmasq.conf.j2 into /etc/dnsmasq.d/dnsmasq.conf
+  ansible.builtin.template:
+    src: dnsmasq.conf.j2
+    dest: /etc/dnsmasq.d/dnsmasq.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+
+- name: Restart service dnsmasq, also issue daemon-reload to pick up config changes
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: dnsmasq

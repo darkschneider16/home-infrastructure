@@ -1,0 +1,6 @@
+---
+- name: Home Infrastructure - HAProxy Server
+  hosts: haproxy
+  become: true
+  roles:
+    - haproxy-server

@@ -1,0 +1,92 @@
+---
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install packages
+  ansible.builtin.apt:
+    name: '{{ install_packages }}'
+    state: present
+
+- name: Disallow IPv6 stack for bind9
+  ansible.builtin.lineinfile:
+    path: /etc/default/named
+    state: present
+    regexp: '^OPTIONS="-u bind"'
+    line: 'OPTIONS="-u bind -4"'
+
+- name: Restart service bind9, also issue daemon-reload to pick up config changes
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: bind9
+
+- name: UFW - Allow DNS lookups
+  community.general.ufw:
+    rule: allow
+    name: Bind9
+
+- name: Collect ip
+  ansible.builtin.setup:
+    filter: ansible_eth0
+
+# Bind9 Configurations
+
+- name: Copy a version of named.conf.options into /etc/bind/named.conf.options
+  ansible.builtin.template:
+    src: named.conf.options.j2
+    dest: /etc/bind/named.conf.options
+    owner: root
+    group: bind
+    mode: '0644'
+    backup: true
+  vars:
+    private_ip_address: "{{ ansible_eth0.ipv4.address }}"
+
+- name: Copy a version of named.conf.local into /etc/bind/named.conf.local
+  ansible.builtin.template:
+    src: named.conf.local.server.j2
+    dest: /etc/bind/named.conf.local
+    owner: root
+    group: bind
+    mode: '0644'
+    backup: true
+  vars:
+    ip_slave: "{{ hostvars['dns2'].ansible_host }}"
+    role: "master"
+
+- name: Create the directory
+  ansible.builtin.file:
+    path: /etc/bind/zones
+    state: directory
+    mode: '0755'
+
+- name: Copy a version of db.__home_domain__ into /etc/bind/zones/db.__home_domain__
+  ansible.builtin.template:
+    src: db.domain.j2
+    dest: "/etc/bind/zones/db.{{ home_domain }}"
+    owner: root
+    group: bind
+    mode: '0644'
+    backup: true
+  vars:
+    private_ip_address: "{{ ansible_eth0.ipv4.address }}"
+    ip_slave: "{{ hostvars['dns2'].ansible_host }}"
+
+- name: Copy a version of db.192.168 into /etc/bind/zones/db.192.168
+  ansible.builtin.template:
+    src: db.192.168.j2
+    dest: /etc/bind/zones/db.192.168
+    owner: root
+    group: bind
+    mode: '0644'
+    backup: true
+  vars:
+    private_ip_address: "{{ ansible_eth0.ipv4.address }}"
+    ip_slave: "{{ hostvars['dns2'].ansible_host }}"
+
+- name: Restart service bind9, also issue daemon-reload to pick up config changes
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: bind9

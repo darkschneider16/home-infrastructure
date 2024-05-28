@@ -1,0 +1,6 @@
+---
+- name: Home Infrastructure - Base configuration of servers
+  hosts: development
+  become: true
+  roles:
+    - ubuntu-server

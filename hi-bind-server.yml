@@ -1,0 +1,6 @@
+---
+- name: Home Infrastructure - DNS Server
+  hosts: dns1
+  become: true
+  roles:
+    - bind-server

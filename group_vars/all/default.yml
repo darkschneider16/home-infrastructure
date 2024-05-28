@@ -1,0 +1,55 @@
+---
+## Bind server and slaves
+
+# named.conf.options.j2
+forwarders:
+  - 1.1.1.1
+  - 9.9.9.9
+  - 8.8.8.8
+
+## Bind server
+
+# db.{{ home_domain }}.j2
+## You must increase this number each time you update the bind server configuration
+serial_bind: 3
+
+## DHCP server
+lease_time: '12h'
+
+## HAProxy
+
+# haproxy.cfg.j2
+priv_key: '/etc/ssl/private/self-signed.key'
+cert: '/etc/ssl/certs/self-signed.pem'
+combined_cert: '/etc/ssl/certs/domain.pem'
+ssl_default_bind_ciphers:
+  "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:\
+  ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:\
+  ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:\
+  DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
+ssl_default_bind_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+ssl_default_bind_options: ssl-min-ver TLSv1.2 no-tls-tickets
+maxconn: '2048'
+tune_ssl_default_dh_param: '2048'
+option_a: 'forwardfor'
+option_b: 'http-server-close'
+bind: '*:443 ssl crt {{ combined_cert }}'
+sites: ['zabbix']
+
+## PostgreSQL
+
+# You must confirm that the versions from PostgreSQL and TimeScaleDB are compatible
+### https://docs.timescale.com/self-hosted/latest/upgrades/upgrade-pg/
+
+postgresql_repo: http://apt.postgresql.org/pub/repos/apt/
+postgresql_url_key: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+postgresql_key_file: /etc/apt/trusted.gpg.d/postgresql.gpg
+timescaledb_repo: https://packagecloud.io/timescale/timescaledb/ubuntu/
+timescaledb_url_key: https://packagecloud.io/timescale/timescaledb/gpgkey
+timescaledb_key_file: /etc/apt/trusted.gpg.d/timescaledb.gpg
+
+# pg_hab.conf.j2 and postgresql.conf.j2
+pg_hba_auth_method: 'trust'
+
+# TimeScaleDB vars
+timescaledb_ext_name: timescaledb

@@ -1,0 +1,7 @@
+---
+- name: Home Infrastructure - PostgreSQL Server
+  hosts: postgresql
+  become: true
+  roles:
+    - postgresql-server
+    - postgresql-create-databases

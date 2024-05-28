@@ -1,0 +1,57 @@
+---
+## Bind server and slaves and DHCP server
+# db.domain.j2, dnsmasq.conf.j2 and haproxy.cfg.j2 (with the port)
+network_inventory:
+  server1:
+    ip: '192.168.2.2'
+    mac: 'aa:bb:cc:11:22:33'
+  server2:
+    ip: '192.168.2.3'
+    mac: 'aa:bb:cc:11:22:33'
+  server3:
+    ip: '192.168.2.4'
+    mac: 'aa:bb:cc:11:22:33'
+  wifi1:
+    ip: '192.168.2.5'
+    mac: 'aa:bb:cc:11:22:33'
+  wifi2:
+    ip: '192.168.2.6'
+    mac: 'aa:bb:cc:11:22:33'
+  raspi1:
+    ip: '192.168.2.7'
+    mac: 'aa:bb:cc:11:22:33'
+  postgresql:
+    ip: '192.168.2.8'
+    mac: 'aa:bb:cc:11:22:33'
+  haproxy:
+    ip: '192.168.2.9'
+    mac: 'aa:bb:cc:11:22:33'
+  dns1:
+    ip: '192.168.2.10'
+    mac: 'aa:bb:cc:11:22:33'
+  dns2:
+    ip: '192.168.2.11'
+    mac: 'aa:bb:cc:11:22:33'
+  dhcp:
+    ip: '192.168.2.12'
+    mac: 'aa:bb:cc:11:22:33'
+  zabbix:
+    ip: '192.168.2.13'
+    mac: 'aa:bb:cc:11:22:33'
+    port: '443'
+
+## DHCP server
+dns_records: ['dns1', 'dns2']
+ip_min: '192.168.2.125'
+ip_max: '192.168.2.200'
+ip_router: '192.168.2.1'
+
+## HAProxy
+
+# haproxy.cfg.j2
+auth_stats_user: 'user'
+
+## PostgreSQL
+
+# pg_hba.conf.j2
+local_network: 192.168.2.0/24

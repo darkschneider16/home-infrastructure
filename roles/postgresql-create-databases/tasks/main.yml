@@ -1,0 +1,55 @@
+---
+## You must install an ansible galaxy collection and a library
+#   $ sudo apt install libpq-dev
+#   $ pip install psycopg2
+#   $ ansible-galaxy collection install community.postgresql
+
+- name: Create a new user for Zabbix Database
+  community.postgresql.postgresql_user:
+    name: '{{ zabbix_user_database }}'
+    password: '{{ zabbix_user_database_password }}'
+
+- name: Create a new database for Zabbix
+  community.postgresql.postgresql_db:
+    name: '{{ zabbix_name_database }}'
+    owner: '{{ zabbix_user_database }}'
+
+- name: Adds TimeScaleDB extension to the Zabbix database
+  community.postgresql.postgresql_ext:
+    name: '{{ timescaledb_ext_name }}'
+    db: '{{ zabbix_name_database }}'
+
+- name: Change max background workers for TimeScaleDB
+  community.postgresql.postgresql_set:
+    name: timescaledb.max_background_workers
+    value: '{{ timescaledb_max_background_workers }}'
+
+- name: Restart service postgresql
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: postgresql
+
+- name: Wait for postgresql to be running
+  ansible.builtin.service_facts:
+  register: result
+  until: result.ansible_facts.services['postgresql'].state == 'running'
+  retries: 10
+  delay: 5
+
+- name: Restart service postgresql
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: true
+    name: postgresql
+
+- name: Wait for postgresql to be running
+  ansible.builtin.service_facts:
+  register: result
+  until: result.ansible_facts.services['postgresql'].state == 'running'
+  retries: 10
+  delay: 10
+
+- name: Unconditionally reboot the machine
+  ansible.builtin.reboot:
+    reboot_timeout: 120

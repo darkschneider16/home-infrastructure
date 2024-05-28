@@ -1,0 +1,19 @@
+//
+// Do any local configuration here
+//
+
+// Consider adding the 1918 zones here, if they are not used in your
+// organization
+//include "/etc/bind/zones.rfc1918";
+
+zone "{{ home_domain }}" {
+	type {{ role }};
+	file "db.{{ home_domain }}";	# zone file path
+	masters { {{ ip_master }}; };	# master private IP address
+};
+
+zone "168.192.in-addr.arpa" {
+	type {{ role }};
+	file "db.192.168";	# 192.168.1.0/24 subnet
+	masters { {{ ip_master }}; };	# master private IP address
+};

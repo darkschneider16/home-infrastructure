@@ -1,0 +1,17 @@
+$TTL	604800
+@	IN	SOA	ns1.{{ home_domain }}.	ns2.{{ home_domain }}.	(
+			{{ serial_bind }}		; Serial
+			604800		; Refresh
+			86400		; Retry
+			2419200	; Expire
+			604800	)	; Negative Cache TTL
+; name servers - NS records
+	IN	NS	ns1.{{ home_domain }}.
+	IN	NS	ns2.{{ home_domain }}.
+
+; PTR records
+{{ private_ip_address.split('.')[3] }}.{{ private_ip_address.split('.')[2] }}	IN	PTR	ns1.{{ home_domain }}.	; {{ private_ip_address }}
+{{ ip_slave.split('.')[3] }}.{{ ip_slave.split('.')[2] }}	IN 	PTR	ns2.{{ home_domain }}.	; {{ ip_slave }} 
+{% for host in network_inventory|dict2items %}
+{{ host.value['ip'].split('.')[3] }}.{{ host.value['ip'].split('.')[2] }}	IN	PTR	{{ host.key }}.{{ home_domain }}.	; {{ host.value['ip'] }}
+{% endfor %}

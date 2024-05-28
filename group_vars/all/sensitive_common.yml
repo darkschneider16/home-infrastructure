@@ -1,0 +1,6 @@
+---
+global_domain: 'noname.com'
+
+## Bind server and slaves and DHCP server
+# named.conf.local.server.j2, named.conf.local.slave.j2 and dnsmasq.conf.js
+home_domain: 'noname.local'
