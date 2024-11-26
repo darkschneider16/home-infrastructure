@@ -4,3 +4,7 @@ global_domain: 'noname.com'
 ## Bind server and slaves and DHCP server
 # named.conf.local.server.j2, named.conf.local.slave.j2 and dnsmasq.conf.js
 home_domain: 'noname.local'
+
+## GitLab
+gitlab_external_url: 'https://gitlab.noname.com'
+gitlab_gravatar: 'https://secure.gravatar.com/avatar/%{hash}?s=%{size}&d=identicon'

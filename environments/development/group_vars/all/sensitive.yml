@@ -46,12 +46,11 @@ ip_min: '192.168.2.125'
 ip_max: '192.168.2.200'
 ip_router: '192.168.2.1'
 
-## HAProxy
-
-# haproxy.cfg.j2
-auth_stats_user: 'user'
-
 ## PostgreSQL
 
 # pg_hba.conf.j2
 local_network: 192.168.2.0/24
+
+# GitLab, Nextcloud and Zabbix
+host_postgresql: '10.45.222.30'
+port_postgresql: '5432'

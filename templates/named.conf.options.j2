@@ -21,7 +21,7 @@ options {
         // the all-0's placeholder.
 
         forwarders {
-		{% for ip in forwarders %}
+		{% for ip in bind_forwarders %}
 		{{ ip }};
 		{% endfor %}
         };

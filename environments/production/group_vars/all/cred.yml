@@ -1,0 +1,22 @@
+---
+# Production
+
+## HAProxy
+# haproxy.cfg.j2
+auth_stats_user: '<username_pro>'
+auth_stats_password: '<password_pro>'
+
+## Zabbix
+zabbix_user_database: '<username_pro>'
+zabbix_user_database_password: '<password_pro>'
+zabbix_name_database: '<dbname_pro>'
+
+## Gitlab
+gitlab_user_database: '<username_pro>'
+gitlab_user_database_password: '<password_pro>'
+gitlab_name_database: '<dbname_pro>'
+gitlab_gmail_account: '<mail@noname.com>'
+gitlab_gmail_password: '<password_pro>'
+
+## Let's Encrypt
+cloudflare_api_token: '<Cloudflare_API_Token>'

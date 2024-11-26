@@ -17,7 +17,7 @@ domain={{ home_domain }}
 # a lease time. If you have more than one network, you will need to
 # repeat this for each network on which you want to supply DHCP
 # service.
-dhcp-range={{ ip_min }},{{ ip_max }},{{ lease_time }}
+dhcp-range={{ ip_min }},{{ ip_max }},{{ dhcp_lease_time }}
 
 # Override the default route supplied by dnsmasq, which assumes the
 # router is the same machine as the one running dnsmasq.

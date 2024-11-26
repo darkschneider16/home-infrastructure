@@ -2,7 +2,7 @@
 ## Bind server and slaves
 
 # named.conf.options.j2
-forwarders:
+bind_forwarders:
   - 1.1.1.1
   - 9.9.9.9
   - 8.8.8.8
@@ -11,30 +11,30 @@ forwarders:
 
 # db.{{ home_domain }}.j2
 ## You must increase this number each time you update the bind server configuration
-serial_bind: 3
+bind_serial: 3
 
 ## DHCP server
-lease_time: '12h'
+dhcp_lease_time: '12h'
 
 ## HAProxy
 
 # haproxy.cfg.j2
-priv_key: '/etc/ssl/private/self-signed.key'
-cert: '/etc/ssl/certs/self-signed.pem'
-combined_cert: '/etc/ssl/certs/domain.pem'
-ssl_default_bind_ciphers:
+haproxy_priv_key: '/etc/ssl/private/self-signed.key'
+haproxy_cert: '/etc/ssl/certs/self-signed.pem'
+haproxy_combined_cert: '/etc/ssl/certs/domain.pem'
+haproxy_ssl_default_bind_ciphers:
   "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:\
   ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:\
   ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:\
   DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
-ssl_default_bind_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
-ssl_default_bind_options: ssl-min-ver TLSv1.2 no-tls-tickets
-maxconn: '2048'
-tune_ssl_default_dh_param: '2048'
-option_a: 'forwardfor'
-option_b: 'http-server-close'
-bind: '*:443 ssl crt {{ combined_cert }}'
-sites: ['zabbix']
+haproxy_ssl_default_bind_ciphersuites: TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+haproxy_ssl_default_bind_options: ssl-min-ver TLSv1.2 no-tls-tickets
+haproxy_maxconn: '2048'
+haproxy_tune_ssl_default_dh_param: '2048'
+haproxy_option_a: 'forwardfor'
+haproxy_option_b: 'http-server-close'
+haproxy_bind: '*:443 ssl crt {{ haproxy_combined_cert }}'
+haproxy_sites: ['zabbix']
 
 ## PostgreSQL
 
@@ -53,3 +53,10 @@ pg_hba_auth_method: 'trust'
 
 # TimeScaleDB vars
 timescaledb_ext_name: timescaledb
+
+# Zabbix
+zabbix_repository_package_url: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest%2Bubuntu24.04_all.deb
+zabbix_repository_key: https://repo.zabbix.com/zabbix-official-repo.key
+
+# Gitlab
+gitlab_url_repo: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh

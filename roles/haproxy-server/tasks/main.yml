@@ -29,11 +29,11 @@
 - name: Create self-signed certificate
   ansible.builtin.command: >
      /usr/bin/openssl req -x509 -nodes -subj '/CN={{ ansible_hostname }}'
-     -days 3650 -newkey rsa:4096 -sha256 -keyout {{ priv_key }} -out {{ cert }}
+     -days 3650 -newkey rsa:4096 -sha256 -keyout {{ haproxy_priv_key }} -out {{ haproxy_cert }}
   changed_when: true
 
 - name: Combine the two parts of the certificate
-  ansible.builtin.shell: /usr/bin/cat {{ cert }} {{ priv_key }} > {{ combined_cert }}
+  ansible.builtin.shell: /usr/bin/cat {{ haproxy_cert }} {{ haproxy_priv_key }} > {{ haproxy_combined_cert }}
   changed_when: true
 
 - name: Copy a version of haproxy.cfg.j2 into /etc/haproxy/haproxy.cfg

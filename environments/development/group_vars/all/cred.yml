@@ -1,0 +1,22 @@
+---
+# Development
+
+## HAProxy
+# haproxy.cfg.j2
+auth_stats_user: '<username_dev>'
+auth_stats_password: '<password_dev>'
+
+## Zabbix
+zabbix_user_database: '<username_dev>'
+zabbix_user_database_password: '<password_dev>'
+zabbix_name_database: '<dbname_dev>'
+
+## Gitlab
+gitlab_user_database: '<username_dev>'
+gitlab_user_database_password: '<password_dev>'
+gitlab_name_database: '<dbname_dev>'
+gitlab_gmail_account: '<mail@noname.com>'
+gitlab_gmail_password: '<password_dev>'
+
+## Let's Encrypt
+cloudflare_api_token: '<Cloudflare_API_Token_dev>'

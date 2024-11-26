@@ -12,13 +12,13 @@ global
 	ca-base /etc/ssl/certs
 	crt-base /etc/ssl/private
 
-	ssl-default-bind-ciphers {{ ssl_default_bind_ciphers }}
-	ssl-default-bind-ciphersuites {{ ssl_default_bind_ciphersuites }}
-	ssl-default-bind-options {{ ssl_default_bind_options }}
+	ssl-default-bind-ciphers {{ haproxy_ssl_default_bind_ciphers }}
+	ssl-default-bind-ciphersuites {{ haproxy_ssl_default_bind_ciphersuites }}
+	ssl-default-bind-options {{ haproxy_ssl_default_bind_options }}
 
 	# Added by me
-	maxconn				{{ maxconn }}
-	tune.ssl.default-dh-param	{{ tune_ssl_default_dh_param }}
+	maxconn				{{ haproxy_maxconn }}
+	tune.ssl.default-dh-param	{{ haproxy_tune_ssl_default_dh_param }}
 
 defaults
 	log	global
@@ -37,24 +37,24 @@ defaults
 	errorfile 504 /etc/haproxy/errors/504.http
 
 	# Added by me
-	option				{{ option_a }}
-	option				{{ option_b }}
+	option				{{ haproxy_option_a }}
+	option				{{ haproxy_option_b }}
 
 # Webs
 frontend http_frontend
 	# For debugging
 	log /dev/log local0 debug
 
-	bind {{ bind }}
+	bind {{ haproxy_bind }}
 	http-request set-header X-Forwarded-Proto https
 
-{% for site in sites %}
+{% for site in haproxy_sites %}
 	acl web_host_{{ site }} hdr(host) -i {{ site }}.{{ global_domain }}
 {% endfor %}
-{% for site in sites %}
+{% for site in haproxy_sites %}
 	use_backend {{ site }} if web_host_{{ site }}
 {% endfor %}
-{% for site in sites %}
+{% for site in haproxy_sites %}
 backend {{ site }}
 	balance leastconn
 	http-request set-header X-Client-IP %[src]

@@ -1,0 +1,59 @@
+---
+- name: Update apt
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install packages
+  ansible.builtin.apt:
+    name: '{{ packages }}'
+    state: present
+
+- name: Remove certbot package
+  ansible.builtin.apt:
+    name: '{{ letsencrypt_package }}'
+    state: absent
+
+- name: Install certbot via snapd
+  community.general.snap:
+    name: '{{ letsencrypt_package }}'
+    classic: true
+
+- name: Accept plugin containment level
+  ansible.builtin.command: /usr/bin/snap set certbot trust-plugin-with-root=ok
+  changed_when: true
+
+- name: Install certbot plugin cloudflare via snapd
+  community.general.snap:
+    name: '{{ letsencrypt_package_dns_plugin }}'
+    classic: true
+
+- name: Create a symbolic link as said in the official documentation
+  ansible.builtin.file:
+    src: '{{ letsencrypt_snap_bin }}'
+    dest: '{{ letsencrypt_system_bin }}'
+    owner: root
+    group: root
+    state: link
+
+- name: Create a CloudFlare credentials ini file
+  ansible.builtin.template:
+    src: cloudflare_cred.ini.j2
+    dest: '{{ letsencrypt_secrets }}'
+    owner: root
+    group: root
+    mode: '0600'
+    backup: true
+  vars:
+    api_token: '{{ cloudflare_api_token }}'
+
+- name: Run CertBot for the first time (it will arrange the entries in the crontabs)
+  ansible.builtin.command:
+    argv:
+      - '{{ letsencrypt_system_bin }}'
+      - certonly
+      - --dns-cloudflare
+      - --dns-cloudflare-credentials
+      - '{{ letsencrypt_secrets }}'
+      - -d
+      - '{{ global_domain }}'
+  changed_when: true

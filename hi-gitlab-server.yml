@@ -1,0 +1,6 @@
+---
+- name: Home Infrastructure - Gitlab Server
+  hosts: gitlab
+  become: true
+  roles:
+    - gitlab-server

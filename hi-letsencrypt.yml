@@ -1,0 +1,6 @@
+---
+- name: Home Infrastructure - Let's Encrypt CertBot client
+  hosts: letsencrypt
+  become: true
+  roles:
+    - letsencrypt-server

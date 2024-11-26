@@ -1,0 +1,7 @@
+---
+packages: ['snapd']
+letsencrypt_package: ['certbot']
+letsencrypt_package_dns_plugin: ['certbot-dns-cloudflare']
+letsencrypt_snap_bin: /snap/bin/certbot
+letsencrypt_system_bin: /usr/bin/certbot
+letsencrypt_secrets: /root/.cloudflare_cred.ini
